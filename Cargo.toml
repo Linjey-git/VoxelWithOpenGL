@@ -1,0 +1,9 @@
+[package]
+name = "VoxelWithOpenGL"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+gl = "0.14.0"
+glam = "0.30.0"
+sdl2 = "0.37.0"
