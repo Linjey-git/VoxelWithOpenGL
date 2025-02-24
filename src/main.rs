@@ -1,25 +1,37 @@
 mod settings;
+mod camera;
+mod player;
+mod scene;
+mod shader_program;
+mod meshes;
 
-use crate::settings::{BG_COLOR, WIN_RES};
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
-use sdl2::pixels::Color;
-use sdl2::video::{GLProfile, Window};
+use sdl2::video::{GLProfile, Window, GLContext};
 use std::time::Instant;
+use crate::settings::Settings;
+use crate::player::Player;
+use crate::shader_program::ShaderProgram;
+use crate::scene::Scene;
 
 struct VoxelEngine {
     sdl_context: sdl2::Sdl,
     window: Window,
-    gl_context: sdl2::video::GLContext, // Додаємо поле для контексту
-    last_frame: Instant,
-    frame_count: u32,
-    fps_timer: f32,
-    is_running: bool,
+    gl_context: GLContext,
     event_pump: sdl2::EventPump,
+    clock: Instant,
+    delta_time: f32,
+    time: f32,
+    is_running: bool,
+    settings: Settings,
+    player: Player,
+    shader_program: ShaderProgram,
+    scene: Scene,
 }
 
 impl VoxelEngine {
     fn new() -> Self {
+        let settings = Settings::new();
         let sdl_context = sdl2::init().unwrap();
         let video_subsystem = sdl_context.video().unwrap();
 
@@ -30,60 +42,66 @@ impl VoxelEngine {
         gl_attr.set_double_buffer(true);
 
         let window = video_subsystem
-            .window("Voxel Engine", WIN_RES.x as u32, WIN_RES.y as u32)
+            .window("Voxel Engine", settings.win_res.x as u32, settings.win_res.y as u32)
             .opengl()
             .position_centered()
             .build()
             .unwrap();
 
-        let gl_context = window.gl_create_context().unwrap(); // Зберігаємо контекст
+        let gl_context = window.gl_create_context().unwrap();
         gl::load_with(|s| video_subsystem.gl_get_proc_address(s) as *const _);
 
-        // Налаштування OpenGL
         unsafe {
             gl::Enable(gl::DEPTH_TEST);
             gl::Enable(gl::CULL_FACE);
             gl::Enable(gl::BLEND);
-            gl::Viewport(0, 0, WIN_RES.x as i32, WIN_RES.y as i32);
+            gl::Viewport(0, 0, settings.win_res.x as i32, settings.win_res.y as i32);
         }
 
         let event_pump = sdl_context.event_pump().unwrap();
+        sdl_context.mouse().set_relative_mouse_mode(true); // Захоплення миші
+        sdl_context.mouse().show_cursor(false); // Приховування курсора
+
+        let player = Player::new(&settings);
+        let shader_program = ShaderProgram::new(&player);
+        let scene = Scene::new(&shader_program);
 
         Self {
             sdl_context,
             window,
-            gl_context, // Додаємо до структури
-            last_frame: Instant::now(),
-            frame_count: 0,
-            fps_timer: 0.0,
-            is_running: true,
+            gl_context,
             event_pump,
+            clock: Instant::now(),
+            delta_time: 0.0,
+            time: 0.0,
+            is_running: true,
+            settings,
+            player,
+            shader_program,
+            scene,
         }
     }
 
     fn update(&mut self) {
+        self.player.update(&mut self.event_pump, self.delta_time, &self.settings);
+        self.shader_program.update(&self.player);
+        self.scene.update();
+
         let now = Instant::now();
-        let delta_time = now.duration_since(self.last_frame).as_secs_f32();
-        self.last_frame = now;
+        self.delta_time = now.duration_since(self.clock).as_secs_f32() * 1000.0; // У мілісекундах
+        self.clock = now;
+        self.time = now.elapsed().as_secs_f32();
 
-        self.frame_count += 1;
-        self.fps_timer += delta_time;
-
-        if self.fps_timer >= 1.0 {
-            let fps = self.frame_count as f32 / self.fps_timer;
-            self.window
-                .set_title(&format!("Voxel Engine - {:.0} FPS", fps))
-                .unwrap();
-            self.frame_count = 0;
-            self.fps_timer = 0.0;
-        }
+        let fps = 1.0 / (self.delta_time / 1000.0); // FPS
+        self.window.set_title(&format!("Voxel Engine - {:.0} FPS", fps)).unwrap();
     }
 
     fn render(&mut self) {
         unsafe {
-            gl::ClearColor(BG_COLOR.x, BG_COLOR.y, BG_COLOR.z, 1.0);
+            gl::ClearColor(self.settings.bg_color.x, self.settings.bg_color.y, self.settings.bg_color.z, 1.0);
             gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
         }
+        self.scene.render();
         self.window.gl_swap_window();
     }
 
@@ -91,12 +109,7 @@ impl VoxelEngine {
         for event in self.event_pump.poll_iter() {
             match event {
                 Event::Quit { .. } => self.is_running = false,
-                Event::KeyDown {
-                    keycode: Some(Keycode::Escape),
-                    ..
-                } => {
-                    self.is_running = false;
-                }
+                Event::KeyDown { keycode: Some(Keycode::Escape), .. } => self.is_running = false,
                 _ => (),
             }
         }
