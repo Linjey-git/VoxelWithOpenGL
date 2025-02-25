@@ -1,20 +1,29 @@
 use glam::{Vec2, Vec3};
 
+pub const CHUNK_SIZE: u32 = 32;
+pub const H_CHUNK_SIZE: u32 = CHUNK_SIZE / 2;
+pub const CHUNK_AREA: u32 = CHUNK_SIZE * CHUNK_SIZE;
+pub const CHUNK_VOL: u32 = CHUNK_AREA * CHUNK_SIZE;
+
 #[derive(Debug)]
 pub struct Settings {
-    pub win_res: Vec2,          // Роздільна здатність вікна
-    pub aspect_ratio: f32,      // Співвідношення сторін
-    pub fov_deg: f32,           // Поле зору в градусах
-    pub v_fov: f32,             // Вертикальний FOV у радіанах
-    pub h_fov: f32,             // Горизонтальний FOV у радіанах
-    pub near: f32,              // Ближня площина відсікання
-    pub far: f32,               // Дальня площина відсікання
-    pub pitch_max: f32,         // Максимальний кут pitch
-    pub player_speed: f32,      // Швидкість руху гравця
-    pub player_rot_speed: f32,  // Швидкість повороту гравця
-    pub player_pos: Vec3,       // Початкова позиція гравця
-    pub mouse_sensitivity: f32, // Чутливість миші
-    pub bg_color: Vec3,         // Колір фону
+    pub win_res: Vec2,
+    pub chunk_size: u32,
+    pub h_chunk_size: u32,
+    pub chunk_area: u32,
+    pub chunk_vol: u32,
+    pub aspect_ratio: f32,
+    pub fov_deg: f32,
+    pub v_fov: f32,
+    pub h_fov: f32,
+    pub near: f32,
+    pub far: f32,
+    pub pitch_max: f32,
+    pub player_speed: f32,
+    pub player_rot_speed: f32,
+    pub player_pos: Vec3,
+    pub mouse_sensitivity: f32,
+    pub bg_color: Vec3,
 }
 
 impl Settings {
@@ -27,6 +36,10 @@ impl Settings {
 
         Self {
             win_res,
+            chunk_size: CHUNK_SIZE,
+            h_chunk_size: H_CHUNK_SIZE,
+            chunk_area: CHUNK_AREA,
+            chunk_vol: CHUNK_VOL,
             aspect_ratio,
             fov_deg,
             v_fov,
@@ -34,22 +47,20 @@ impl Settings {
             near: 0.1,
             far: 2000.0,
             pitch_max: 89.0f32.to_radians(),
-            player_speed: 0.005,
+            player_speed: 0.05, //0.005
             player_rot_speed: 0.003,
-            player_pos: Vec3::new(0.0, 0.0, 1.0),
+            player_pos: Vec3::new(H_CHUNK_SIZE as f32, CHUNK_SIZE as f32, 1.5 * CHUNK_SIZE as f32),
             mouse_sensitivity: 0.002,
             bg_color: Vec3::new(0.1, 0.16, 0.25),
         }
     }
 
-    // Метод для оновлення залежних значень при зміні win_res чи fov_deg
     pub fn update_dependent(&mut self) {
         self.aspect_ratio = self.win_res.x / self.win_res.y;
         self.v_fov = self.fov_deg.to_radians();
         self.h_fov = 2.0 * (self.v_fov * 0.5).tan().atan2(self.aspect_ratio);
     }
 
-    // Методи для зміни налаштувань із меню
     pub fn set_resolution(&mut self, width: f32, height: f32) {
         self.win_res = Vec2::new(width, height);
         self.update_dependent();

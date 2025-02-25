@@ -1,5 +1,5 @@
-use glam::{Mat4, Vec3};
 use crate::settings::Settings;
+use glam::{Mat4, Vec3};
 
 pub struct Camera {
     pub position: Vec3,
@@ -10,7 +10,7 @@ pub struct Camera {
     pub forward: Vec3,
     pub m_proj: Mat4,
     pub m_view: Mat4,
-    pitch_max: f32
+    pitch_max: f32,
 }
 
 impl Camera {
@@ -22,9 +22,14 @@ impl Camera {
             up: Vec3::new(0.0, 1.0, 0.0),
             right: Vec3::new(1.0, 0.0, 0.0),
             forward: Vec3::new(0.0, 0.0, -1.0),
-            m_proj: Mat4::perspective_rh(settings.v_fov, settings.aspect_ratio, settings.near, settings.far),
-            m_view: Mat4::IDENTITY,
-            pitch_max: settings.pitch_max
+            m_proj: Mat4::perspective_rh(
+                settings.v_fov,
+                settings.aspect_ratio,
+                settings.near,
+                settings.far,
+            ),
+            m_view: Mat4::default(),
+            pitch_max: settings.pitch_max,
         };
         camera.update();
         camera
@@ -44,7 +49,8 @@ impl Camera {
             self.yaw.cos() * self.pitch.cos(),
             self.pitch.sin(),
             self.yaw.sin() * self.pitch.cos(),
-        ).normalize();
+        )
+        .normalize();
         self.right = self.forward.cross(Vec3::new(0.0, 1.0, 0.0)).normalize();
         self.up = self.right.cross(self.forward).normalize();
     }

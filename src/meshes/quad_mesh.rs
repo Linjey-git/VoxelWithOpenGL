@@ -36,7 +36,8 @@ impl QuadMesh {
 
         let attrs = [(0, 3), (1, 3)]; // Позиція (3f) + колір (3f)
         Self {
-            base: BaseMesh::new(shader_program.quad_program(), &vertex_data, &attrs, 6),
+            base: BaseMesh::new_f32(shader_program.chunk_program(), &vertex_data, &attrs, 6),
+            // base: BaseMesh::new(shader_program.chunk_program(), &vertex_data, &attrs, 6),
         }
     }
 

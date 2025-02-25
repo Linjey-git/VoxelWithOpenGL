@@ -1,18 +1,21 @@
-mod settings;
 mod camera;
+mod meshes;
 mod player;
 mod scene;
+mod settings;
 mod shader_program;
-mod meshes;
+mod textures;
+mod world_objects;
 
+use crate::player::Player;
+use crate::scene::Scene;
+use crate::settings::Settings;
+use crate::shader_program::ShaderProgram;
+use crate::textures::Textures;
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
-use sdl2::video::{GLProfile, Window, GLContext};
+use sdl2::video::{GLContext, GLProfile, Window};
 use std::time::Instant;
-use crate::settings::Settings;
-use crate::player::Player;
-use crate::shader_program::ShaderProgram;
-use crate::scene::Scene;
 
 struct VoxelEngine {
     sdl_context: sdl2::Sdl,
@@ -27,6 +30,7 @@ struct VoxelEngine {
     player: Player,
     shader_program: ShaderProgram,
     scene: Scene,
+    textures: Textures,
 }
 
 impl VoxelEngine {
@@ -42,7 +46,11 @@ impl VoxelEngine {
         gl_attr.set_double_buffer(true);
 
         let window = video_subsystem
-            .window("Voxel Engine", settings.win_res.x as u32, settings.win_res.y as u32)
+            .window(
+                "Voxel Engine",
+                settings.win_res.x as u32,
+                settings.win_res.y as u32,
+            )
             .opengl()
             .position_centered()
             .build()
@@ -62,6 +70,7 @@ impl VoxelEngine {
         sdl_context.mouse().set_relative_mouse_mode(true); // Захоплення миші
         sdl_context.mouse().show_cursor(false); // Приховування курсора
 
+        let textures = Textures::new(&gl_context);
         let player = Player::new(&settings);
         let shader_program = ShaderProgram::new(&player);
         let scene = Scene::new(&shader_program);
@@ -79,11 +88,13 @@ impl VoxelEngine {
             player,
             shader_program,
             scene,
+            textures
         }
     }
 
     fn update(&mut self) {
-        self.player.update(&mut self.event_pump, self.delta_time, &self.settings);
+        self.player
+            .update(&mut self.event_pump, self.delta_time, &self.settings);
         self.shader_program.update(&self.player);
         self.scene.update();
 
@@ -93,12 +104,19 @@ impl VoxelEngine {
         self.time = now.elapsed().as_secs_f32();
 
         let fps = 1.0 / (self.delta_time / 1000.0); // FPS
-        self.window.set_title(&format!("Voxel Engine - {:.0} FPS", fps)).unwrap();
+        self.window
+            .set_title(&format!("Voxel Engine - {:.0} FPS", fps))
+            .unwrap();
     }
 
     fn render(&mut self) {
         unsafe {
-            gl::ClearColor(self.settings.bg_color.x, self.settings.bg_color.y, self.settings.bg_color.z, 1.0);
+            gl::ClearColor(
+                self.settings.bg_color.x,
+                self.settings.bg_color.y,
+                self.settings.bg_color.z,
+                1.0,
+            );
             gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
         }
         self.scene.render();
@@ -109,7 +127,10 @@ impl VoxelEngine {
         for event in self.event_pump.poll_iter() {
             match event {
                 Event::Quit { .. } => self.is_running = false,
-                Event::KeyDown { keycode: Some(Keycode::Escape), .. } => self.is_running = false,
+                Event::KeyDown {
+                    keycode: Some(Keycode::Escape),
+                    ..
+                } => self.is_running = false,
                 _ => (),
             }
         }
