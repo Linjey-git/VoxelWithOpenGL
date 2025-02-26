@@ -1,22 +1,24 @@
 use crate::shader_program::ShaderProgram;
-use crate::world_objects::Chunk;
+use crate::world::World;
+use crate::settings::Settings;
+use crate::player::Player;
 
 pub struct Scene {
-    chunk: Chunk,
+    world: World,
 }
 
 impl Scene {
-    pub fn new(shader_program: &ShaderProgram) -> Self {
+    pub fn new(shader_program: &ShaderProgram, settings: &Settings) -> Self {
         Self {
-            chunk: Chunk::new(shader_program),
+            world: World::new(shader_program, settings),
         }
     }
 
-    pub fn update(&mut self) {
-        // Поки порожній, як у Python
+    pub fn update(&mut self, player: &Player) {
+        self.world.update(player);
     }
 
     pub fn render(&self) {
-        self.chunk.render();
+        self.world.render();
     }
 }

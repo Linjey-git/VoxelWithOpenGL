@@ -24,6 +24,8 @@ pub struct Settings {
     pub player_pos: Vec3,
     pub mouse_sensitivity: f32,
     pub bg_color: Vec3,
+    pub render_distance: i32, // Додано
+    pub world_seed: u32,      // Додано
 }
 
 impl Settings {
@@ -52,6 +54,8 @@ impl Settings {
             player_pos: Vec3::new(H_CHUNK_SIZE as f32, CHUNK_SIZE as f32, 1.5 * CHUNK_SIZE as f32),
             mouse_sensitivity: 0.002,
             bg_color: Vec3::new(0.1, 0.16, 0.25),
+            render_distance: 3, // Значення за замовчуванням
+            world_seed: 0,      // Значення за замовчуванням
         }
     }
 

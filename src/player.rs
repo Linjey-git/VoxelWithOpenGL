@@ -3,7 +3,7 @@ use crate::settings::Settings;
 use sdl2::EventPump;
 
 pub struct Player {
-    camera: Camera,
+    pub(crate) camera: Camera,
 }
 
 impl Player {

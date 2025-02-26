@@ -35,6 +35,16 @@ impl Camera {
         camera
     }
 
+    // Додаємо метод update_projection
+    pub fn update_projection(&mut self, settings: &Settings) {
+        self.m_proj = Mat4::perspective_rh(
+            settings.v_fov,
+            settings.aspect_ratio,
+            settings.near,
+            settings.far,
+        );
+    }
+
     pub fn update(&mut self) {
         self.update_vectors();
         self.update_view_matrix();

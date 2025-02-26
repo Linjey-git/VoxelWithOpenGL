@@ -6,6 +6,7 @@ mod settings;
 mod shader_program;
 mod textures;
 mod world_objects;
+mod world;
 
 use crate::player::Player;
 use crate::scene::Scene;
@@ -31,6 +32,7 @@ struct VoxelEngine {
     shader_program: ShaderProgram,
     scene: Scene,
     textures: Textures,
+    mouse_captured: bool, // Нове поле
 }
 
 impl VoxelEngine {
@@ -53,6 +55,7 @@ impl VoxelEngine {
             )
             .opengl()
             .position_centered()
+            .resizable()
             .build()
             .unwrap();
 
@@ -73,8 +76,7 @@ impl VoxelEngine {
         let textures = Textures::new(&gl_context);
         let player = Player::new(&settings);
         let shader_program = ShaderProgram::new(&player);
-        let scene = Scene::new(&shader_program);
-
+        let scene = Scene::new(&shader_program, &settings);
         Self {
             sdl_context,
             window,
@@ -88,7 +90,8 @@ impl VoxelEngine {
             player,
             shader_program,
             scene,
-            textures
+            textures,
+            mouse_captured: true, // Початковий стан: миша захоплена
         }
     }
 
@@ -96,7 +99,7 @@ impl VoxelEngine {
         self.player
             .update(&mut self.event_pump, self.delta_time, &self.settings);
         self.shader_program.update(&self.player);
-        self.scene.update();
+        self.scene.update(&self.player);
 
         let now = Instant::now();
         self.delta_time = now.duration_since(self.clock).as_secs_f32() * 1000.0; // У мілісекундах
@@ -130,7 +133,28 @@ impl VoxelEngine {
                 Event::KeyDown {
                     keycode: Some(Keycode::Escape),
                     ..
-                } => self.is_running = false,
+                } => {
+                    // Перемикаємо стан захоплення миші
+                    self.mouse_captured = !self.mouse_captured;
+                    self.sdl_context.mouse().set_relative_mouse_mode(self.mouse_captured);
+                    self.sdl_context.mouse().show_cursor(!self.mouse_captured);
+                }
+                Event::Window {
+                    win_event: sdl2::event::WindowEvent::Resized(width, height),
+                    ..
+                } => {
+                    self.settings.set_resolution(width as f32, height as f32);
+                    unsafe {
+                        gl::Viewport(0, 0, width, height);
+                        self.player.camera.update_projection(&self.settings);
+                        gl::UseProgram(self.shader_program.chunk_program());
+                        crate::shader_program::set_uniform_mat4(
+                            self.shader_program.chunk_program(),
+                            "m_proj",
+                            self.player.m_proj(),
+                        );
+                    }
+                }
                 _ => (),
             }
         }

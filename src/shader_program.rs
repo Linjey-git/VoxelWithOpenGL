@@ -75,7 +75,7 @@ unsafe fn compile_shader(source: &str, shader_type: u32) -> u32 {
     shader
 }
 
-unsafe fn set_uniform_mat4(program: u32, name: &str, matrix: &Mat4) {
+pub unsafe fn set_uniform_mat4(program: u32, name: &str, matrix: &Mat4) {
     let loc = gl::GetUniformLocation(program, format!("{}\0", name).as_ptr() as *const _);
     gl::UniformMatrix4fv(loc, 1, gl::FALSE, matrix.as_ref().as_ptr());
 }
