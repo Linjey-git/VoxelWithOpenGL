@@ -4,6 +4,8 @@ pub const CHUNK_SIZE: u32 = 32;
 pub const H_CHUNK_SIZE: u32 = CHUNK_SIZE / 2;
 pub const CHUNK_AREA: u32 = CHUNK_SIZE * CHUNK_SIZE;
 pub const CHUNK_VOL: u32 = CHUNK_AREA * CHUNK_SIZE;
+pub const MIN_Y: i32 = -2; // Нижня межа світу в чанках
+pub const MAX_Y: i32 = 2; // Верхня межа світу
 
 #[derive(Debug)]
 pub struct Settings {
@@ -49,9 +51,9 @@ impl Settings {
             near: 0.1,
             far: 2000.0,
             pitch_max: 89.0f32.to_radians(),
-            player_speed: 0.05, //0.005
+            player_speed: 0.025, //0.005
             player_rot_speed: 0.003,
-            player_pos: Vec3::new(H_CHUNK_SIZE as f32, CHUNK_SIZE as f32, 1.5 * CHUNK_SIZE as f32),
+            player_pos: Vec3::new(H_CHUNK_SIZE as f32 + 15.0, CHUNK_SIZE as f32, 1.5 * CHUNK_SIZE as f32),
             mouse_sensitivity: 0.002,
             bg_color: Vec3::new(0.1, 0.16, 0.25),
             render_distance: 3, // Значення за замовчуванням
