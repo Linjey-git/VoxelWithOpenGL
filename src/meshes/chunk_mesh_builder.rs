@@ -1,4 +1,4 @@
-use crate::settings::{CHUNK_AREA, CHUNK_SIZE, CHUNK_VOL, MIN_Y};
+use crate::settings::{CHUNK_AREA, CHUNK_SIZE, CHUNK_VOL, MAX_Y, MIN_Y};
 use crate::world::World;
 use crate::world_objects::Chunk;
 use glam::IVec3;
@@ -46,17 +46,34 @@ fn is_void(
     }
 
     // Якщо воксель поза межами чанка, перевіряємо сусідній чанк
-    let cx = wx.div_euclid(CHUNK_SIZE as i32);
-    let cy = wy.div_euclid(CHUNK_SIZE as i32);
-    let cz = wz.div_euclid(CHUNK_SIZE as i32);
+    let cx = (wx as f32 / CHUNK_SIZE as f32).floor() as i32;
+    let cy = (wy as f32 / CHUNK_SIZE as f32).floor() as i32;
+    let cz = (wz as f32 / CHUNK_SIZE as f32).floor() as i32;
 
-    if let Some(chunk) = world.chunks.get(&IVec3::new(cx, cy, cz)) {
-        let local_x = wx.rem_euclid(CHUNK_SIZE as i32);
-        let local_y = wy.rem_euclid(CHUNK_SIZE as i32);
-        let local_z = wz.rem_euclid(CHUNK_SIZE as i32);
-        let index = (local_x + CHUNK_SIZE as i32 * local_z + CHUNK_AREA as i32 * local_y) as usize;
-        return chunk.voxels[index] == 0;
+    // let cx = wx.div_euclid(CHUNK_SIZE as i32);
+    // let cy = wy.div_euclid(CHUNK_SIZE as i32);
+    // let cz = wz.div_euclid(CHUNK_SIZE as i32);
+
+    let world_d = world.render_distance * 1;
+    let world_h = MIN_Y.abs() + MAX_Y;
+
+    if (cx <= world_d
+        || cx > 0
+        || cy <= world_d
+        || cy > 0
+        || cz <= world_d
+        || cz > 0)
+    {
+        return false;
     }
+
+    // if let Some(chunk) = world.chunks.get(&IVec3::new(cx, cy, cz)) {
+    //     let local_x = x.rem_euclid(CHUNK_SIZE as i32);
+    //     let local_y = y.rem_euclid(CHUNK_SIZE as i32);
+    //     let local_z = z.rem_euclid(CHUNK_SIZE as i32);
+    //     let index = (local_x + CHUNK_SIZE as i32 * local_z + CHUNK_AREA as i32 * local_y) as usize;
+    //     return chunk.voxels[index] != 0;
+    // }
 
     // Якщо чанк не згенерований і нижче MIN_Y, вважаємо суцільним
     // if wy < MIN_Y * CHUNK_SIZE as i32{
